@@ -2,14 +2,47 @@ import styled from "styled-components";
 import GlobalStyles from "./styles/GlobelStyles.js";
 import Button from "./ui/Button.jsx";
 import Heading from "./ui/Heading.jsx";
+import Row from "./ui/Row.jsx";
+import Input from "./ui/Input.jsx";
+
+const StyledApp = styled.main`
+	padding: 20px;
+`;
 
 function App() {
 	return (
 		<>
 			<GlobalStyles />
-			<Heading as={"h1"}>this is h1</Heading>
-			<Heading as={"h2"}>this is h2</Heading>
-			<Heading as={"h3"}>this is h3</Heading>
+			<StyledApp>
+				<Row>
+					<Row type="horizontal">
+						<Heading as={"h1"}>The Wild Oasis</Heading>
+						<div>
+							<Heading as={"h2"}>this is h2</Heading>
+							<Button>Check in</Button>
+							<Button
+								variation="secondary"
+								size="small">
+								Check out
+							</Button>
+						</div>
+					</Row>
+
+					<Row>
+						<Heading as={"h3"}>Form</Heading>
+						<form>
+							<Input
+								type="number"
+								placeholder="Number of guests"
+							/>
+							<Input
+								type="number"
+								placeholder="Number of guests"
+							/>
+						</form>
+					</Row>
+				</Row>
+			</StyledApp>
 		</>
 	);
 }
