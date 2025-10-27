@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import GlobalStyles from "./styles/GlobelStyles.js";
 
 const H1 = styled.h1`
 	font-size: 30px;
@@ -7,7 +8,12 @@ const H1 = styled.h1`
 `;
 
 function App() {
-	return <H1>Hello</H1>;
+	return (
+		<>
+			<GlobalStyles />
+			<H1>Hello</H1>;
+		</>
+	);
 }
 
 export default App;
