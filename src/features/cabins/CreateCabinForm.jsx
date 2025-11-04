@@ -29,6 +29,7 @@ function CreateCabinForm({ cabinForEdit = {}, onCloseModal }) {
 					onSuccess: (data) => {
 						console.log(data);
 						reset();
+						onCloseModal?.();
 					},
 				}
 			);

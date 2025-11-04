@@ -74,7 +74,9 @@ function Window({ children, name }) {
 	if (name !== openName) return null;
 
 	return createPortal(
-		<Overlay>
+		<Overlay onClick={(e) => {
+			if(e.target === e.currentTarget) close()
+		}}>
 			<StyledModal>
 				<Button>
 					<HiXMark onClick={close} />
