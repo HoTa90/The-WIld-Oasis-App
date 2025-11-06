@@ -7,7 +7,8 @@ import { useBookings } from "./useBookings.js";
 import Pagination from "../../ui/Pagination.jsx";
 
 function BookingTable() {
-	const { bookings, isPending } = useBookings();
+	const { bookings, isPending, count } = useBookings();
+	console.log(bookings)
 	
 
 	if (isPending) {
@@ -41,7 +42,7 @@ function BookingTable() {
 					)}
 				/>
 				<Table.Footer>
-					<Pagination count={15}/>
+					<Pagination count={count}/>
 				</Table.Footer>
 			</Table>
 		</Menus>

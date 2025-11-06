@@ -1,30 +1,40 @@
+import { PAGE_SIZE } from "../utils/constants.js";
 import { getToday } from "../utils/helpers";
 import supabase from "./supabase";
 
-export async function getAllBookings({ filter, sortBy }) {
+export async function getAllBookings({ filter, sortBy, page }) {
 	let query = supabase
 		.from("bookings")
 		.select(
-			"id, created_at,start_date, end_date, num_nights, num_guests, status, total_price, cabins(name), guests(full_name, email)"
+			"id, created_at,start_date, end_date, num_nights, num_guests, status, total_price, cabins(name), guests(full_name, email)",
+			{ count: "exact" }
 		);
-	console.log(sortBy);
+
 	if (filter) {
 		query = query.eq(filter.field, filter.value);
 	}
 
 	if (sortBy) {
 		query = query.order(sortBy.field, { ascending: sortBy.direction === "asc" });
-		console.log("hi");
 	}
 
-	const { data, error } = await query;
+	console.log(page)
+
+	if (page) {
+		const from = (page - 1) * PAGE_SIZE;
+		const to = from + PAGE_SIZE - 1;
+		query = query.range(from, to);
+	}
+
+	const { data, error, count } = await query;
+	
 
 	if (error) {
 		console.error(error);
 		throw new Error("Bookings not found");
 	}
 
-	return data;
+	return { data, count };
 }
 
 export async function getBooking(id) {
@@ -76,7 +86,9 @@ export async function getStaysTodayActivity() {
 	const { data, error } = await supabase
 		.from("bookings")
 		.select("*, guests(fullName, nationality, countryFlag)")
-		.or(`and(status.eq.unconfirmed,start_date.eq.${getToday()}),and(status.eq.checked-in,end_date.eq.${getToday()})`)
+		.or(
+			`and(status.eq.unconfirmed,start_date.eq.${getToday()}),and(status.eq.checked-in,end_date.eq.${getToday()})`
+		)
 		.order("created_at");
 
 	// Equivalent to this. But by querying this, we only download the data we actually need, otherwise we would need ALL bookings ever created
