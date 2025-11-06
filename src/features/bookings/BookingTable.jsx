@@ -7,16 +7,16 @@ import { useBookings } from "./useBookings.js";
 
 function BookingTable() {
 	const { bookings, isPending } = useBookings();
+	
 
 	if (isPending) {
 		return <Spinner />;
 	}
 
-	if (!bookings.length) {
+	if (bookings?.length === 0) {
 		return <Empty resource={"bookings"} />;
 	}
 
-	console.log(bookings);
 
 	return (
 		<Menus>
