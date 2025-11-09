@@ -18,7 +18,6 @@ export async function getAllBookings({ filter, sortBy, page }) {
 		query = query.order(sortBy.field, { ascending: sortBy.direction === "asc" });
 	}
 
-	console.log(page)
 
 	if (page) {
 		const from = (page - 1) * PAGE_SIZE;
@@ -33,6 +32,7 @@ export async function getAllBookings({ filter, sortBy, page }) {
 		console.error(error);
 		throw new Error("Bookings not found");
 	}
+	
 
 	return { data, count };
 }
