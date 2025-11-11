@@ -7,11 +7,11 @@ import Table from "../../ui/Table";
 import { formatCurrency } from "../../utils/helpers";
 import { formatDistanceFromNow } from "../../utils/helpers";
 import Menus from "../../ui/Menus.jsx";
-import { HiArrowDownOnSquare, HiArrowUpOnSquare, HiEye, HiTrash, HiXCircle, HiXMark } from "react-icons/hi2";
+import { HiArrowDownOnSquare, HiArrowUpOnSquare, HiEye, HiTrash } from "react-icons/hi2";
 import { useNavigate } from "react-router";
 import { useCheckout } from "../check-in-out/useCheckout.js";
 import Modal from "../../ui/Modal.jsx";
-import { deleteBooking } from "../../services/apiBookings.js";
+
 import ConfirmDelete from "../../ui/ConfirmDelete.jsx";
 import { useDeleteBooking } from "./useDeleteBooking.js";
 
@@ -64,7 +64,7 @@ function BookingRow({
 
 	const navigate = useNavigate();
 	const { checkout, isCheckingOut } = useCheckout();
-	const {deleteBooking, isPending} = useDeleteBooking()
+	const { deleteBooking, isPending } = useDeleteBooking();
 
 	return (
 		<Table.Row>
