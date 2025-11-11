@@ -4,6 +4,7 @@ import { useCabins } from "./useCabins.js";
 import Table from "../../ui/Table.jsx";
 import Menus from "../../ui/Menus.jsx";
 import { useSearchParams } from "react-router";
+import Empty from "../../ui/Empty.jsx";
 
 function CabinTable() {
 	const { cabins, isPending } = useCabins();

@@ -17,7 +17,9 @@ function Login() {
   return <LoginLayout>
 	<Logo/>
 	<Heading as="h4">Log in your account</Heading>
-	<LoginForm/></LoginLayout>;
+	<LoginForm/>
+	</LoginLayout>;
+	
 }
 
 export default Login;
