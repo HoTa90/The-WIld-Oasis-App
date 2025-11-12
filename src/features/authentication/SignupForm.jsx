@@ -84,7 +84,8 @@ function SignupForm() {
 				{/* type is an HTML attribute! */}
 				<Button
 					$variation="secondary"
-					type="reset">
+					type="reset"
+					onClick={reset}>
 					Cancel
 				</Button>
 				<Button disabled={isPending}>{isPending ? <SpinnerMini /> : "Create new user"}</Button>
