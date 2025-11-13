@@ -4,6 +4,7 @@ import Heading from "../../ui/Heading.jsx";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useDarkMode } from "../../context/DarkModeContext.jsx";
 import { eachDayOfInterval, format, isSameDay, subDays } from "date-fns";
+import { formatCurrency } from "../../utils/helpers.js";
 
 const StyledSalesChart = styled(DashboardBox)`
 	grid-column: 1 / -1;
@@ -14,38 +15,6 @@ const StyledSalesChart = styled(DashboardBox)`
 		stroke: var(--color-grey-300);
 	}
 `;
-
-const fakeData = [
-	{ label: "Jan 09", total_sales: 480, extras_price: 20 },
-	{ label: "Jan 10", total_sales: 580, extras_price: 100 },
-	{ label: "Jan 11", total_sales: 550, extras_price: 150 },
-	{ label: "Jan 12", total_sales: 600, extras_price: 50 },
-	{ label: "Jan 13", total_sales: 700, extras_price: 150 },
-	{ label: "Jan 14", total_sales: 800, extras_price: 150 },
-	{ label: "Jan 15", total_sales: 700, extras_price: 200 },
-	{ label: "Jan 16", total_sales: 650, extras_price: 200 },
-	{ label: "Jan 17", total_sales: 600, extras_price: 300 },
-	{ label: "Jan 18", total_sales: 550, extras_price: 100 },
-	{ label: "Jan 19", total_sales: 700, extras_price: 100 },
-	{ label: "Jan 20", total_sales: 800, extras_price: 200 },
-	{ label: "Jan 21", total_sales: 700, extras_price: 100 },
-	{ label: "Jan 22", total_sales: 810, extras_price: 50 },
-	{ label: "Jan 23", total_sales: 950, extras_price: 250 },
-	{ label: "Jan 24", total_sales: 970, extras_price: 100 },
-	{ label: "Jan 25", total_sales: 900, extras_price: 200 },
-	{ label: "Jan 26", total_sales: 950, extras_price: 300 },
-	{ label: "Jan 27", total_sales: 850, extras_price: 200 },
-	{ label: "Jan 28", total_sales: 900, extras_price: 100 },
-	{ label: "Jan 29", total_sales: 800, extras_price: 300 },
-	{ label: "Jan 30", total_sales: 950, extras_price: 200 },
-	{ label: "Jan 31", total_sales: 1100, extras_price: 300 },
-	{ label: "Feb 01", total_sales: 1200, extras_price: 400 },
-	{ label: "Feb 02", total_sales: 1250, extras_price: 300 },
-	{ label: "Feb 03", total_sales: 1400, extras_price: 450 },
-	{ label: "Feb 04", total_sales: 1500, extras_price: 500 },
-	{ label: "Feb 05", total_sales: 1400, extras_price: 600 },
-	{ label: "Feb 06", total_sales: 1450, extras_price: 400 },
-];
 
 export default function SalesChart({ bookings, numDays }) {
 	const { isDarkMode } = useDarkMode();
@@ -80,17 +49,13 @@ export default function SalesChart({ bookings, numDays }) {
 		};
 	});
 
-
-
-
-
 	return (
 		<StyledSalesChart>
 			<Heading as="h2">Sales</Heading>
 			<ResponsiveContainer
 				height={300}
 				width={"100%"}>
-				<AreaChart data={data}>
+				<AreaChart data={data} margin={{ top: 16, right: 16, bottom: 16, left: 40 }} >
 					<CartesianGrid strokeDasharray={4} />
 					<XAxis
 						dataKey={"label"}
@@ -101,9 +66,10 @@ export default function SalesChart({ bookings, numDays }) {
 						unit={"$"}
 						tick={{ fill: colors.text }}
 						tickLine={{ stroke: colors.text }}
+						tickFormatter={formatCurrency}
 					/>
 
-					<Tooltip contentStyle={{ backgroundColor: colors.background }} />
+					<Tooltip contentStyle={{ backgroundColor: colors.background }} formatter={formatCurrency}  />
 					<Area
 						dataKey={"total_sales"}
 						type={"monotone"}
