@@ -51,11 +51,16 @@ export default function SalesChart({ bookings, numDays }) {
 
 	return (
 		<StyledSalesChart>
-			<Heading as="h2">Sales</Heading>
+			<Heading as="h2">
+				Sales from {format(allDays[0], "MMM dd yyyy")} &mdash;{" "}
+				{format(allDays[allDays.length - 1], "MMM dd yyyy")}{" "}
+			</Heading>
 			<ResponsiveContainer
 				height={300}
 				width={"100%"}>
-				<AreaChart data={data} margin={{ top: 16, right: 16, bottom: 16, left: 40 }} >
+				<AreaChart
+					data={data}
+					margin={{ top: 16, right: 16, bottom: 16, left: 40 }}>
 					<CartesianGrid strokeDasharray={4} />
 					<XAxis
 						dataKey={"label"}
@@ -69,7 +74,10 @@ export default function SalesChart({ bookings, numDays }) {
 						tickFormatter={formatCurrency}
 					/>
 
-					<Tooltip contentStyle={{ backgroundColor: colors.background }} formatter={formatCurrency}  />
+					<Tooltip
+						contentStyle={{ backgroundColor: colors.background }}
+						formatter={formatCurrency}
+					/>
 					<Area
 						dataKey={"total_sales"}
 						type={"monotone"}
