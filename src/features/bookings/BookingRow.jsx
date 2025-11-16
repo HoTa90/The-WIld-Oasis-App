@@ -45,11 +45,11 @@ const Amount = styled.div`
 function BookingRow({
 	booking: {
 		id: bookingId,
-		created_at,
+	
 		start_date,
 		end_date,
 		num_nights,
-		num_guests,
+	
 		total_price,
 		status,
 		guests: { full_name: guestName, email },
@@ -65,6 +65,7 @@ function BookingRow({
 	const navigate = useNavigate();
 	const { checkout, isCheckingOut } = useCheckout();
 	const { deleteBooking, isPending } = useDeleteBooking();
+
 
 	return (
 		<Table.Row>

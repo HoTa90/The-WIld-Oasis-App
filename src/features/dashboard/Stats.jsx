@@ -7,8 +7,7 @@ function Stats({ bookings, confirmedStays, cabinsCount, numDays }) {
 	const sales = bookings.reduce((acc, cur) => acc + cur.total_price, 0);
 	const checkins = confirmedStays.length;
 	const ocupations = confirmedStays.reduce((acc, cur) => acc + cur.num_nights, 0) / (numDays * cabinsCount);
-	console.log(numDays)
-	console.log(cabinsCount)
+
 
 	// num chekced in nights / all available nights (num days * num cabins )
 
