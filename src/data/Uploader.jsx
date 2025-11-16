@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { isFuture, isPast, isToday } from "date-fns";
 import supabase from "../services/supabase";
 import Button from "../ui/Button";
@@ -85,7 +85,21 @@ async function createBookings() {
 
 function Uploader() {
 	const [isLoading, setIsLoading] = useState(false);
+	const [showUploader, setShowUploader] = useState(false);
 
+	// Only show uploader in development or with secret key combo
+	useEffect(() => {
+		const handleKeyPress = (e) => {
+			// Press Shift + U + D to toggle uploader
+			if (e.shiftKey && e.key === 'U') {
+				setShowUploader(prev => !prev);
+			}
+		};
+		window.addEventListener('keydown', handleKeyPress);
+		return () => window.removeEventListener('keydown', handleKeyPress);
+	}, []);
+
+	if (!showUploader) return null;
 	async function uploadAll() {
 		setIsLoading(true);
 		// Bookings need to be deleted FIRST

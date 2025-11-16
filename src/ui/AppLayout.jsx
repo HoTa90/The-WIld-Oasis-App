@@ -13,7 +13,8 @@ const StyledAppLayout = styled.div`
 const Main = styled.main`
 	background-color: var(--color-grey-50);
 	padding: 4rem 4.8rem 6.4rem;
-	overflow: scroll;
+	overflow-y: auto; /* Only vertical scroll when needed */
+	overflow-x: hidden; /* Prevent horizontal scroll */
 	transform: translateZ(0);
 	will-change: background-color;
 `;
@@ -24,7 +25,7 @@ const Container = styled.div`
 	display: flex;
 	flex-direction: column;
 	gap: 3.2rem;
-
+	width: 100%; /* Ensure it doesn't overflow */
 `;
 
 export default function AppLayout() {
