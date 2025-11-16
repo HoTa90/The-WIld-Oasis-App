@@ -14,12 +14,19 @@ function UpdateSettingsForm() {
 
 	const { isUpdating, updateSetting } = useUpdateSetting();
 
-	function handleUpdate(e, field) {
+	function handleUpdate(e, field, originalValue) {
 		const { value } = e.target;
 
 		if (!value) return;
 
-		updateSetting({ [field]: value });
+
+		const newValue = Number(value);
+		const oldValue = Number(originalValue);
+
+
+		if (newValue === oldValue) return;
+
+		updateSetting({ [field]: newValue });
 	}
 
 	if (isPending) return <Spinner />;
@@ -32,7 +39,7 @@ function UpdateSettingsForm() {
 					id="min-nights"
 					defaultValue={min_booking_length}
 					disabled={isUpdating}
-					onBlur={(e) => handleUpdate(e, "min_booking_length")}
+					onBlur={(e) => handleUpdate(e, "min_booking_length", min_booking_length)}
 				/>
 			</FormRow>
 			<FormRow label="Maximum nights/booking">
@@ -41,7 +48,7 @@ function UpdateSettingsForm() {
 					id="max-nights"
 					defaultValue={max_booking_length}
 					disabled={isUpdating}
-					onBlur={(e) => handleUpdate(e, "max_booking_length")}
+					onBlur={(e) => handleUpdate(e, "max_booking_length", max_booking_length)}
 				/>
 			</FormRow>
 			<FormRow label="Maximum guests/booking">
@@ -50,7 +57,7 @@ function UpdateSettingsForm() {
 					id="max-guests"
 					defaultValue={max_guests_booking}
 					disabled={isUpdating}
-					onBlur={(e) => handleUpdate(e, "max_guests_booking")}
+					onBlur={(e) => handleUpdate(e, "max_guests_booking", max_guests_booking)}
 				/>
 			</FormRow>
 			<FormRow label="Breakfast price">
@@ -59,7 +66,7 @@ function UpdateSettingsForm() {
 					id="breakfast-price"
 					defaultValue={breakfast_price}
 					disabled={isUpdating}
-					onBlur={(e) => handleUpdate(e, "max_booking_length")}
+					onBlur={(e) => handleUpdate(e, "breakfast_price", breakfast_price)}
 				/>
 			</FormRow>
 		</Form>
