@@ -7,6 +7,8 @@ const Tag = styled.span`
   font-weight: 600;
   padding: 0.4rem 1.2rem;
   border-radius: 100px;
+  min-width: 9rem; /* Fixed width to match your grid column */
+  text-align: center;
 
   /* Make these dynamic, based on the received prop */
   color: var(--color-${(props) => props.type}-700);
