@@ -1,4 +1,6 @@
 import { differenceInDays, formatDistance, parseISO } from 'date-fns';
+import countries from "i18n-iso-countries";
+import en from "i18n-iso-countries/langs/en.json";
 
 
 // We want to make this function work for both Date objects and strings (which come from Supabase)
@@ -44,4 +46,48 @@ export function getDisabledDatesFromBookings(bookings) {
   }
 
   return Array.from(disabled).map((d) => new Date(d));
+}
+
+export function rangeOverlapsDisabled(start, end, disabledDates) {
+  if (!start || !end) return false;
+
+  const normalize = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+
+  const startTime = normalize(start);
+  const endTime = normalize(end);
+
+  // We consider the range [start, end) – end is checkout day (not occupied)
+  return disabledDates.some((d) => {
+    const t = normalize(d);
+    return t >= startTime && t < endTime;
+  });
+}
+
+
+
+
+
+countries.registerLocale(en);
+
+export function getFlagSvgUrl(countryName) {
+  if (!countryName) return "";
+
+  const name = countryName.trim().toLowerCase();
+
+  if (name === "kosovo") return "https://flagcdn.com/xk.svg";
+
+  const ukParts = {
+    england: "gb-eng",
+    scotland: "gb-sct",
+    wales: "gb-wls",
+    "northern ireland": "gb-nir",
+  };
+
+  if (ukParts[name]) return `https://flagcdn.com/${ukParts[name]}.svg`;
+
+  const alpha2 = countries.getAlpha2Code(countryName, "en");
+
+  if (!alpha2) return "";
+
+  return `https://flagcdn.com/${alpha2.toLowerCase()}.svg`;
 }

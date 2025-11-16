@@ -5,292 +5,433 @@ import "react-datepicker/dist/react-datepicker.css";
 import Button from "../../ui/Button.jsx";
 import Form from "../../ui/Form.jsx";
 import FormRow from "../../ui/FormRow.jsx";
-import Input, { Checkbox } from "../../ui/Input.jsx";
+import Input from "../../ui/Input.jsx";
 import SpinnerMini from "../../ui/SpinnerMini.jsx";
 import { useCabins } from "../cabins/useCabins.js";
 import Select from "../../ui/Select.jsx";
 import { getBookingsForCabin } from "../../services/apiCabins.js";
-import { getDisabledDatesFromBookings } from "../../utils/helpers.js";
-import styled from "styled-components";
+import { getDisabledDatesFromBookings, getFlagSvgUrl, rangeOverlapsDisabled } from "../../utils/helpers.js";
+import { useSettings } from "../settings/useSettings.js";
+import { useCreateBooking } from "./useCreateBooking.js";
+import { useNavigate } from "react-router";
 
+function CreateBookingForm() {
+	const {
+		register,
+		handleSubmit,
+		formState: { errors },
+		watch,
+		reset,
+		setValue,
+		setError,
+		clearErrors,
+	} = useForm({
+		defaultValues: {
+			cabinId: "",
+			fullName: "",
+			email: "",
+			nationalId: "",
+			nationality: "",
+			countryFlag: "",
+			numGuests: 1,
+			hasBreakfast: false,
+			observations: "",
+		},
+	});
 
+	const { cabins, isPending: isCabinsPending } = useCabins();
+	const { settings, isPending: isSettingsPending } = useSettings();
+	const { createBooking, isCreating } = useCreateBooking();
+	console.log(settings);
+	const [disabledDates, setDisabledDates] = useState([]);
+	const [startDate, setStartDate] = useState(null);
+	const [endDate, setEndDate] = useState(null);
+	const [isLoadingDates, setIsLoadingDates] = useState(false);
+	const navigate = useNavigate();
 
+	const watchedCabinId = watch("cabinId") || "";
+	const nationality = watch("nationality");
+	const countryFlag = watch("countryFlag");
 
+	// Fetch bookings & disabled dates when cabin changes
+	useEffect(() => {
+		async function loadDisabledDates() {
+			if (!watchedCabinId) {
+				setDisabledDates([]);
+				return;
+			}
 
+			try {
+				setIsLoadingDates(true);
+				const bookings = await getBookingsForCabin(Number(watchedCabinId));
+				const disabled = getDisabledDatesFromBookings(bookings);
+				setDisabledDates(disabled);
+			} finally {
+				setIsLoadingDates(false);
+			}
+		}
 
-function CreateBookingForm({ onCloseModal }) {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    getValues,
-    watch,
-    reset,
-    setValue,
-  } = useForm({
-    defaultValues: {
-      cabinId: "",
-      numGuests: 1,
-      hasBreakfast: false,
-    },
-  });
+		loadDisabledDates();
+	}, [watchedCabinId]);
 
-  const { cabins, isPending } = useCabins();
-  const [disabledDates, setDisabledDates] = useState([]);
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
-  const [isLoadingDates, setIsLoadingDates] = useState(false);
+	useEffect(() => {
+		if (!nationality) {
+			setValue("countryFlag", "");
+			return;
+		}
 
-  const watchedCabinId = watch("cabinId") || "";
+		const url = getFlagSvgUrl(nationality);
+		setValue("countryFlag", url);
+	}, [nationality, setValue]);
 
-  // Fetch bookings & disabled dates when cabin changes
-  useEffect(() => {
-    async function loadDisabledDates() {
-      if (!watchedCabinId) {
-        setDisabledDates([]);
-        return;
-      }
+	if (isCabinsPending || isSettingsPending || !cabins || !settings) return <SpinnerMini />;
 
-      try {
-        setIsLoadingDates(true);
-        const bookings = await getBookingsForCabin(Number(watchedCabinId));
-        const disabled = getDisabledDatesFromBookings(bookings);
-        setDisabledDates(disabled);
-      } finally {
-        setIsLoadingDates(false);
-      }
-    }
+	const cabinOptions = [
+		{ value: "", label: "Select a cabin..." },
+		...cabins.map((cabin) => ({
+			value: String(cabin.id),
+			label: cabin.name,
+		})),
+	];
 
-    loadDisabledDates();
-  }, [watchedCabinId]);
+	const selectedCabin = cabins.find((cabin) => cabin.id === Number(watchedCabinId)) || null;
 
-  // Move the conditional return AFTER all hooks
-  if (isPending || !cabins) return <SpinnerMini />;
+	const cabinMaxCapacity = selectedCabin?.max_capacity ?? 8;
+	const settingsMaxGuests = settings?.max_guests_booking ?? cabinMaxCapacity;
+	const maxGuests = Math.min(cabinMaxCapacity, settingsMaxGuests);
 
-  // Build options for Select from cabins
-  const cabinOptions = [
-    { value: "", label: "Select a cabin..." },
-    ...cabins.map((cabin) => ({
-      value: String(cabin.id),
-      label: cabin.name,
-    })),
-  ];
+	async function onSubmit(values) {
+		const {
+			cabinId,
+			fullName,
+			email,
+			nationalId,
+			nationality,
+			countryFlag,
+			numGuests,
+			hasBreakfast,
+			observations,
+		} = values;
 
-  const selectedCabin =
-    cabins.find((cabin) => cabin.id === Number(watchedCabinId)) || null;
+		// Reset any manual errors from previous submit
+		clearErrors(["startDate", "endDate", "cabinId"]);
 
-  const maxCapacity = selectedCabin?.max_capacity ?? 8;
+		let hasError = false;
 
-  async function onSubmit(values) {
-    const {
-      cabinId,
-      fullName,
-      email,
-      nationalId,
-      nationality,
-      countryFlag,
-      numGuests,
-      hasBreakfast,
-      observations,
-    } = values;
+		if (!cabinId || !selectedCabin) {
+			setError("cabinId", {
+				type: "manual",
+				message: "Please select a cabin",
+			});
+			hasError = true;
+		}
 
-    if (!cabinId || !selectedCabin) {
-      alert("Please select a cabin");
-      return;
-    }
+		if (!startDate) {
+			setError("startDate", {
+				type: "manual",
+				message: "Please select a start date",
+			});
+			hasError = true;
+		}
 
-    if (!startDate || !endDate) {
-      alert("Please select start and end date");
-      return;
-    }
+		if (!endDate) {
+			setError("endDate", {
+				type: "manual",
+				message: "Please select an end date",
+			});
+			hasError = true;
+		}
 
-    const numNights = Math.max(
-      1,
-      Math.round((endDate - startDate) / (1000 * 60 * 60 * 24))
-    );
+		if (hasError) return;
 
-    const nightlyPrice =
-      selectedCabin.regular_price - (selectedCabin.discount || 0);
-    const cabinPrice = nightlyPrice * numNights;
+		const numNights = Math.max(1, Math.round((endDate - startDate) / (1000 * 60 * 60 * 24)));
 
-    /*
-    await createBooking({
-      cabinId: selectedCabin.id,
-      guestData: { fullName, email, nationalId, nationality, countryFlag },
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
-      numGuests: Number(numGuests),
-      numNights,
-      cabinPrice,
-      extrasPrice: 0,
-      hasBreakfast,
-      observations,
-    });
-    */
+		const minNights = settings.min_booking_length;
+		const maxNights = settings.max_booking_length;
 
-    reset();
-    setStartDate(null);
-    setEndDate(null);
-    onCloseModal?.();
-  }
+		if (numNights < minNights || numNights > maxNights) {
+			setError("endDate", {
+				type: "manual",
+				message: `Bookings must be between ${minNights} and ${maxNights} nights.`,
+			});
+			return;
+		}
 
-  function handleCabinChange(e) {
-    setValue("cabinId", e.target.value, { shouldValidate: true });
-    // Reset selected dates when cabin changes
-    setStartDate(null);
-    setEndDate(null);
-  }
+		const nightlyPrice = selectedCabin.regular_price - (selectedCabin.discount || 0);
+		const cabinPrice = nightlyPrice * numNights;
 
-  return (
-    <Form onSubmit={handleSubmit(onSubmit)}>
-      <FormRow label="Cabin" error={errors?.cabinId?.message}>
-        <Select
-          id="cabinId"
-          options={cabinOptions}
-          type="white"
-          value={watchedCabinId}
-          onChange={handleCabinChange}
-        />
-      </FormRow>
-      <input
-        type="hidden"
-        {...register("cabinId", {
-          required: "Please choose a cabin",
-        })}
-      />
+		const breakfastPrice = settings.breakfast_price ?? 0;
+		const extrasPrice = hasBreakfast ? Number(numGuests) * numNights * breakfastPrice : 0;
 
-      {/* Guest fields */}
-      <FormRow label="Full name" error={errors?.fullName?.message}>
-        <Input
-          type="text"
-          id="fullName"
-          {...register("fullName", {
-            required: "This field is required",
-          })}
-        />
-      </FormRow>
+		createBooking(
+			{
+				cabinId: selectedCabin.id,
+				startDate: startDate.toISOString(),
+				endDate: endDate.toISOString(),
+				numNights,
+				numGuests: Number(numGuests),
+				cabinPrice,
+				extrasPrice,
+				hasBreakfast,
+				observations,
+				status: "unconfirmed",
+				hasPaid: false,
+				guestData: {
+					fullName,
+					email,
+					nationalId,
+					nationality,
+					countryFlag,
+				},
+			},
+			{
+				onSuccess: (data) => {
+					reset();
+					setStartDate(null);
+					setEndDate(null);
+					setDisabledDates([]);
+					navigate(`/bookings/${data.id}`)
+				},
+			}
+		);
+	}
 
-      <FormRow label="Email address" error={errors?.email?.message}>
-        <Input
-          type="email"
-          id="email"
-          {...register("email", {
-            required: "This field is required",
-            pattern: {
-              value: /\S+@\S+\.\S+/,
-              message: "Please provide a valid email address",
-            },
-          })}
-        />
-      </FormRow>
+	function handleCabinChange(e) {
+		setValue("cabinId", e.target.value, { shouldValidate: true });
+		setStartDate(null);
+		setEndDate(null);
+	}
 
-      <FormRow label="National ID" error={errors?.nationalId?.message}>
-        <Input
-          type="text"
-          id="nationalId"
-          {...register("nationalId", {
-            required: "This field is required",
-          })}
-        />
-      </FormRow>
+	return (
+		<Form onSubmit={handleSubmit(onSubmit)}>
+			<FormRow
+				label="Cabin"
+				error={errors?.cabinId?.message}>
+				<Select
+					id="cabinId"
+					options={cabinOptions}
+					type="white"
+					value={watchedCabinId}
+					onChange={handleCabinChange}
+				/>
+			</FormRow>
+			<input
+				type="hidden"
+				{...register("cabinId", {
+					required: "Please choose a cabin",
+				})}
+			/>
 
-      <FormRow label="Nationality" error={errors?.nationality?.message}>
-        <Input
-          type="text"
-          id="nationality"
-          {...register("nationality", {
-            required: "This field is required",
-          })}
-        />
-      </FormRow>
+			{/* Guest fields */}
+			<FormRow
+				label="Full name"
+				error={errors?.fullName?.message}>
+				<Input
+					type="text"
+					id="fullName"
+					{...register("fullName", {
+						required: "This field is required",
+					})}
+				/>
+			</FormRow>
 
-      <FormRow label="Country flag (emoji)">
-        <Input type="text" id="countryFlag" {...register("countryFlag")} />
-      </FormRow>
+			<FormRow
+				label="Email address"
+				error={errors?.email?.message}>
+				<Input
+					type="email"
+					id="email"
+					{...register("email", {
+						required: "This field is required",
+						pattern: {
+							value: /\S+@\S+\.\S+/,
+							message: "Please provide a valid email address",
+						},
+					})}
+				/>
+			</FormRow>
 
-      {/* Booking fields: calendar with disabled dates */}
-<FormRow label="Start date">
-  {isLoadingDates ? (
-    <SpinnerMini />
-  ) : (
-    <DatePicker
-      selected={startDate}
-      onChange={(date) => setStartDate(date)}
-      selectsStart
-      startDate={startDate}
-      endDate={endDate}
-      excludeDates={disabledDates}
-      minDate={new Date()}
-      dateFormat="yyyy-MM-dd"
-      placeholderText="Select start date"
-      popperPlacement="bottom-start"
-    />
-  )}
-</FormRow>
+			<FormRow
+				label="National ID"
+				error={errors?.nationalId?.message}>
+				<Input
+					type="text"
+					id="nationalId"
+					{...register("nationalId", {
+						required: "This field is required",
+					})}
+				/>
+			</FormRow>
 
-<FormRow label="End date">
-  {isLoadingDates ? (
-    <SpinnerMini />
-  ) : (
-    <DatePicker
-      selected={endDate}
-      onChange={(date) => setEndDate(date)}
-      selectsEnd
-      startDate={startDate}
-      endDate={endDate}
-      excludeDates={disabledDates}
-      minDate={startDate || new Date()}
-      dateFormat="yyyy-MM-dd"
-      placeholderText="Select end date"
-      popperPlacement="bottom-start"
-    />
-  )}
-</FormRow>
+			<FormRow
+				label="Nationality"
+				error={errors?.nationality?.message}>
+				<Input
+					type="text"
+					id="nationality"
+					placeholder="e.g., Germany, France"
+					{...register("nationality", {
+						required: "This field is required",
+					})}
+				/>
+			</FormRow>
 
+			{/* Display flag image, store URL as hidden input */}
+			<FormRow label="Country flag">
+				<div>
+					{countryFlag ? (
+						<img
+							src={countryFlag}
+							alt="Country flag"
+							style={{
+								width: "40px",
+								height: "30px",
+								objectFit: "contain",
+								border: "1px solid var(--color-grey-300)",
+								borderRadius: "var(--border-radius-sm)",
+							}}
+						/>
+					) : (
+						<span style={{ color: "var(--color-grey-400)" }}>Enter nationality to see flag</span>
+					)}
+					{/* Hidden input inside the same container */}
+					<input
+						type="hidden"
+						{...register("countryFlag")}
+					/>
+				</div>
+			</FormRow>
 
-      <FormRow
-        label={`Number of guests (max ${maxCapacity})`}
-        error={errors?.numGuests?.message}
-      >
-        <Input
-          type="number"
-          id="numGuests"
-          min={1}
-          max={maxCapacity}
-          {...register("numGuests", {
-            required: "This field is required",
-            min: {
-              value: 1,
-              message: "At least 1 guest",
-            },
-            max: {
-              value: maxCapacity,
-              message: `Max capacity is ${maxCapacity}`,
-            },
-          })}
-        />
-      </FormRow>
+			<FormRow
+				label="Start date"
+				error={errors?.startDate?.message}>
+				{isLoadingDates ? (
+					<SpinnerMini />
+				) : (
+					<DatePicker
+						selected={startDate}
+						onChange={(date) => {
+							setStartDate(date);
+							clearErrors("startDate");
 
-      <FormRow label="Include breakfast?">
-        <Input
-          type="checkbox"
-          id="hasBreakfast"
-          {...register("hasBreakfast")}
-        />
-      </FormRow>
+							if (date && endDate && rangeOverlapsDisabled(date, endDate, disabledDates)) {
+								setError("endDate", {
+									type: "manual",
+									message: "This period overlaps an existing booking. Please choose different dates.",
+								});
+								setEndDate(null);
+							}
+						}}
+						selectsStart
+						startDate={startDate}
+						endDate={endDate}
+						excludeDates={disabledDates}
+						minDate={new Date()}
+						dateFormat="yyyy-MM-dd"
+						placeholderText="Select start date"
+						popperPlacement="bottom-start"
+					/>
+				)}
+			</FormRow>
 
-      <FormRow label="Observations">
-        <Input as="textarea" id="observations" {...register("observations")} />
-      </FormRow>
+			<FormRow
+				label="End date"
+				error={errors?.endDate?.message}>
+				{isLoadingDates ? (
+					<SpinnerMini />
+				) : (
+					<DatePicker
+						selected={endDate}
+						onChange={(date) => {
+							if (!date) {
+								setEndDate(null);
+								return;
+							}
 
-      <FormRow>
-        <Button $variation="secondary" type="reset" onClick={reset}>
-          Cancel
-        </Button>
-        <Button>Create booking</Button>
-      </FormRow>
-    </Form>
-  );
+							if (!startDate) {
+								setEndDate(date);
+								clearErrors("endDate");
+								return;
+							}
+
+							if (rangeOverlapsDisabled(startDate, date, disabledDates)) {
+								setError("endDate", {
+									type: "manual",
+									message: "This period overlaps an existing booking. Please choose different dates.",
+								});
+								setEndDate(null);
+								return;
+							}
+
+							clearErrors("endDate");
+							setEndDate(date);
+						}}
+						selectsEnd
+						startDate={startDate}
+						endDate={endDate}
+						excludeDates={disabledDates}
+						minDate={startDate || new Date()}
+						dateFormat="yyyy-MM-dd"
+						placeholderText="Select end date"
+						popperPlacement="bottom-start"
+					/>
+				)}
+			</FormRow>
+
+			<FormRow
+				label={`Number of guests (max ${maxGuests})`}
+				error={errors?.numGuests?.message}>
+				<Input
+					type="number"
+					id="numGuests"
+					min={1}
+					max={maxGuests}
+					{...register("numGuests", {
+						required: "This field is required",
+						min: {
+							value: 1,
+							message: "At least 1 guest",
+						},
+						max: {
+							value: maxGuests,
+							message: `Max capacity is ${maxGuests}`,
+						},
+					})}
+				/>
+			</FormRow>
+
+			<FormRow label="Include breakfast?">
+				<Input
+					type="checkbox"
+					id="hasBreakfast"
+					{...register("hasBreakfast")}
+				/>
+			</FormRow>
+
+			<FormRow label="Observations">
+				<Input
+					as="textarea"
+					id="observations"
+					{...register("observations")}
+				/>
+			</FormRow>
+
+			<FormRow>
+				<Button
+					$variation="secondary"
+					type="reset"
+					onClick={() => {
+						reset();
+						setStartDate(null);
+						setEndDate(null);
+						setDisabledDates([]);
+					}}>
+					Cancel
+				</Button>
+				<Button disabled={isCreating}>{isCreating ? "Creating..." : "Create booking"}</Button>
+			</FormRow>
+		</Form>
+	);
 }
 
 export default CreateBookingForm;

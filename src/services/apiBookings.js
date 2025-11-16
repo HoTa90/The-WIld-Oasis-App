@@ -121,3 +121,97 @@ export async function deleteBooking(id) {
 	}
 	return data;
 }
+async function getOrCreateGuest({
+  fullName,
+  email,
+  nationalId,
+  nationality,
+  countryFlag,
+}) {
+  // 1) Check if guest already exists by email
+  const { data: guests, error: guestError } = await supabase
+    .from("guests")
+    .select("id")
+    .eq("email", email);
+
+  if (guestError) {
+    console.error(guestError);
+    throw new Error("Could not check existing guest");
+  }
+
+  if (guests && guests.length > 0) {
+    return guests[0]; // { id }
+  }
+
+
+  const { data, error } = await supabase
+    .from("guests")
+    .insert([
+      {
+        full_name: fullName,
+        national_id: nationalId,
+        email,
+        nationality,
+        country_flag: countryFlag,
+      },
+    ])
+    .select()
+    .single();
+
+  if (error) {
+    console.error(error);
+    throw new Error("Guest could not be created");
+  }
+
+  return data; 
+}
+
+export async function createBooking({
+  cabinId,
+  startDate,
+  endDate,
+  numNights,
+  numGuests,
+  cabinPrice,
+  extrasPrice,
+  hasBreakfast,
+  observations,
+  status = "unconfirmed",    
+  hasPaid = false,           
+  guestData,                  
+}) {
+  const guest = await getOrCreateGuest(guestData);
+
+  const totalPrice = cabinPrice + extrasPrice;
+
+  const { data, error } = await supabase
+    .from("bookings")
+    .insert([
+      {
+        start_date: startDate,      
+        end_date: endDate,           
+        num_nights: numNights,     
+        num_guests: numGuests,     
+        cabin_price: cabinPrice,     
+        extras_price: extrasPrice,   
+        total_price: totalPrice,     
+        status,                    
+        has_breakfast: hasBreakfast,
+        has_paid: hasPaid,         
+        observations,              
+        cabin_id: cabinId,            
+        guest_id: guest.id,           
+      },
+    ])
+    .select(
+      "id, start_date, end_date, status, cabin_id, guest_id, num_nights, num_guests, total_price"
+    )
+    .single();
+
+  if (error) {
+    console.error(error);
+    throw new Error("Booking could not be created");
+  }
+
+  return data;
+}
