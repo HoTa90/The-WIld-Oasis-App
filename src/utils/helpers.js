@@ -28,3 +28,20 @@ export const formatCurrency = (value) =>
   new Intl.NumberFormat('en', { style: 'currency', currency: 'USD' }).format(
     value
   );
+
+  // utils/getDisabledDates.js
+export function getDisabledDatesFromBookings(bookings) {
+  const disabled = new Set();
+
+  for (const booking of bookings) {
+    const start = new Date(booking.start_date);
+    const end = new Date(booking.end_date);
+
+    // include start..end-1
+    for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
+      disabled.add(d.toDateString());
+    }
+  }
+
+  return Array.from(disabled).map((d) => new Date(d));
+}

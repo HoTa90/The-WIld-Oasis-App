@@ -58,3 +58,20 @@ export async function deleteCabin(id) {
 
 	return data;
 }
+
+
+
+
+export async function getBookingsForCabin(cabinId) {
+  const { data, error } = await supabase
+    .from("bookings")
+    .select("start_date, end_date, status")
+    .eq("cabin_id", cabinId)
+    .in("status", ["unconfirmed", "checked-in"]); 
+  if (error) {
+    console.error(error);
+    throw new Error("Couldn't fetch bookings for this cabin");
+  }
+
+  return data;
+}
