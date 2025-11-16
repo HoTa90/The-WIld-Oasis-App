@@ -31,7 +31,7 @@ function Select({ options, value, onChange, type, ...props }) {
 			maxMenuHeight={null}
 			menuShouldScrollIntoView={false}
 			styles={{
-				control: (base, state) => ({
+				control: (base) => ({
 					...base,
 					backgroundColor: "var(--color-grey-0)",
 					borderColor: borderColor,
@@ -44,8 +44,6 @@ function Select({ options, value, onChange, type, ...props }) {
 					"&:hover": {
 						borderColor: borderColor,
 					},
-					// Override focus state
-					boxShadow: state.isFocused ? `0 0 0 1px ${borderColor}` : "var(--shadow-sm)",
 					outline: "none",
 				}),
 				valueContainer: (base) => ({
@@ -61,6 +59,9 @@ function Select({ options, value, onChange, type, ...props }) {
 				indicatorsContainer: (base) => ({
 					...base,
 					height: "40px",
+				}),
+				indicatorSeparator: () => ({
+					display: "none",
 				}),
 				singleValue: (base) => ({
 					...base,
