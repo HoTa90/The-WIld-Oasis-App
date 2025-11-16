@@ -15,7 +15,7 @@ import { useSettings } from "../settings/useSettings.js";
 import { useCreateBooking } from "./useCreateBooking.js";
 import { useNavigate } from "react-router";
 
-function CreateBookingForm() {
+function CreateBookingForm({ onCloseModal }) {
 	const {
 		register,
 		handleSubmit,
@@ -44,6 +44,7 @@ function CreateBookingForm() {
 	const { createBooking, isCreating } = useCreateBooking();
 	console.log(settings);
 	const [disabledDates, setDisabledDates] = useState([]);
+
 	const [startDate, setStartDate] = useState(null);
 	const [endDate, setEndDate] = useState(null);
 	const [isLoadingDates, setIsLoadingDates] = useState(false);
@@ -190,7 +191,8 @@ function CreateBookingForm() {
 					setStartDate(null);
 					setEndDate(null);
 					setDisabledDates([]);
-					navigate(`/bookings/${data.id}`)
+					onCloseModal?.();
+					navigate(`/bookings/${data.id}`);
 				},
 			}
 		);
@@ -203,234 +205,238 @@ function CreateBookingForm() {
 	}
 
 	return (
-		<Form onSubmit={handleSubmit(onSubmit)}>
-			<FormRow
-				label="Cabin"
-				error={errors?.cabinId?.message}>
-				<Select
-					id="cabinId"
-					options={cabinOptions}
-					type="white"
-					value={watchedCabinId}
-					onChange={handleCabinChange}
-				/>
-			</FormRow>
-			<input
-				type="hidden"
-				{...register("cabinId", {
-					required: "Please choose a cabin",
-				})}
-			/>
-
-			{/* Guest fields */}
-			<FormRow
-				label="Full name"
-				error={errors?.fullName?.message}>
-				<Input
-					type="text"
-					id="fullName"
-					{...register("fullName", {
-						required: "This field is required",
+		<>
+			<Form onSubmit={handleSubmit(onSubmit)}>
+				<FormRow
+					label="Cabin"
+					error={errors?.cabinId?.message}>
+					<Select
+						id="cabinId"
+						options={cabinOptions}
+						type="white"
+						value={watchedCabinId}
+						onChange={handleCabinChange}
+					/>
+				</FormRow>
+				<input
+					type="hidden"
+					{...register("cabinId", {
+						required: "Please choose a cabin",
 					})}
 				/>
-			</FormRow>
 
-			<FormRow
-				label="Email address"
-				error={errors?.email?.message}>
-				<Input
-					type="email"
-					id="email"
-					{...register("email", {
-						required: "This field is required",
-						pattern: {
-							value: /\S+@\S+\.\S+/,
-							message: "Please provide a valid email address",
-						},
-					})}
-				/>
-			</FormRow>
+				{/* Guest fields */}
+				<FormRow
+					label="Full name"
+					error={errors?.fullName?.message}>
+					<Input
+						type="text"
+						id="fullName"
+						{...register("fullName", {
+							required: "This field is required",
+						})}
+					/>
+				</FormRow>
 
-			<FormRow
-				label="National ID"
-				error={errors?.nationalId?.message}>
-				<Input
-					type="text"
-					id="nationalId"
-					{...register("nationalId", {
-						required: "This field is required",
-					})}
-				/>
-			</FormRow>
+				<FormRow
+					label="Email address"
+					error={errors?.email?.message}>
+					<Input
+						type="email"
+						id="email"
+						{...register("email", {
+							required: "This field is required",
+							pattern: {
+								value: /\S+@\S+\.\S+/,
+								message: "Please provide a valid email address",
+							},
+						})}
+					/>
+				</FormRow>
 
-			<FormRow
-				label="Nationality"
-				error={errors?.nationality?.message}>
-				<Input
-					type="text"
-					id="nationality"
-					placeholder="e.g., Germany, France"
-					{...register("nationality", {
-						required: "This field is required",
-					})}
-				/>
-			</FormRow>
+				<FormRow
+					label="National ID"
+					error={errors?.nationalId?.message}>
+					<Input
+						type="text"
+						id="nationalId"
+						{...register("nationalId", {
+							required: "This field is required",
+						})}
+					/>
+				</FormRow>
 
-			{/* Display flag image, store URL as hidden input */}
-			<FormRow label="Country flag">
-				<div>
-					{countryFlag ? (
-						<img
-							src={countryFlag}
-							alt="Country flag"
-							style={{
-								width: "40px",
-								height: "30px",
-								objectFit: "contain",
-								border: "1px solid var(--color-grey-300)",
-								borderRadius: "var(--border-radius-sm)",
-							}}
+				<FormRow
+					label="Country"
+					error={errors?.nationality?.message}>
+					<Input
+						type="text"
+						id="nationality"
+						placeholder="e.g. Germany, France"
+						{...register("nationality", {
+							required: "This field is required",
+						})}
+					/>
+				</FormRow>
+
+				{/* Display flag image, store URL as hidden input */}
+				<FormRow label="Country flag">
+					<div>
+						{countryFlag ? (
+							<img
+								src={countryFlag}
+								alt="Country flag"
+								style={{
+									width: "40px",
+									height: "30px",
+									objectFit: "contain",
+									border: "1px solid var(--color-grey-300)",
+									borderRadius: "var(--border-radius-sm)",
+								}}
+							/>
+						) : (
+							<span style={{ color: "var(--color-grey-400)" }}>Enter your Country to see the flag</span>
+						)}
+						{/* Hidden input inside the same container */}
+						<input
+							type="hidden"
+							{...register("countryFlag")}
 						/>
+					</div>
+				</FormRow>
+
+				<FormRow
+					label="Start date"
+					error={errors?.startDate?.message}>
+					{isLoadingDates ? (
+						<SpinnerMini />
 					) : (
-						<span style={{ color: "var(--color-grey-400)" }}>Enter nationality to see flag</span>
+						<DatePicker
+							selected={startDate}
+							onChange={(date) => {
+								setStartDate(date);
+								clearErrors("startDate");
+
+								if (date && endDate && rangeOverlapsDisabled(date, endDate, disabledDates)) {
+									setError("endDate", {
+										type: "manual",
+										message:
+											"This period overlaps an existing booking. Please choose different dates.",
+									});
+									setEndDate(null);
+								}
+							}}
+							selectsStart
+							startDate={startDate}
+							endDate={endDate}
+							excludeDates={disabledDates}
+							minDate={new Date()}
+							dateFormat="yyyy-MM-dd"
+							placeholderText="Select start date"
+							popperPlacement="bottom-start"
+						/>
 					)}
-					{/* Hidden input inside the same container */}
-					<input
-						type="hidden"
-						{...register("countryFlag")}
-					/>
-				</div>
-			</FormRow>
+				</FormRow>
 
-			<FormRow
-				label="Start date"
-				error={errors?.startDate?.message}>
-				{isLoadingDates ? (
-					<SpinnerMini />
-				) : (
-					<DatePicker
-						selected={startDate}
-						onChange={(date) => {
-							setStartDate(date);
-							clearErrors("startDate");
+				<FormRow
+					label="End date"
+					error={errors?.endDate?.message}>
+					{isLoadingDates ? (
+						<SpinnerMini />
+					) : (
+						<DatePicker
+							selected={endDate}
+							onChange={(date) => {
+								if (!date) {
+									setEndDate(null);
+									return;
+								}
 
-							if (date && endDate && rangeOverlapsDisabled(date, endDate, disabledDates)) {
-								setError("endDate", {
-									type: "manual",
-									message: "This period overlaps an existing booking. Please choose different dates.",
-								});
-								setEndDate(null);
-							}
-						}}
-						selectsStart
-						startDate={startDate}
-						endDate={endDate}
-						excludeDates={disabledDates}
-						minDate={new Date()}
-						dateFormat="yyyy-MM-dd"
-						placeholderText="Select start date"
-						popperPlacement="bottom-start"
-					/>
-				)}
-			</FormRow>
+								if (!startDate) {
+									setEndDate(date);
+									clearErrors("endDate");
+									return;
+								}
 
-			<FormRow
-				label="End date"
-				error={errors?.endDate?.message}>
-				{isLoadingDates ? (
-					<SpinnerMini />
-				) : (
-					<DatePicker
-						selected={endDate}
-						onChange={(date) => {
-							if (!date) {
-								setEndDate(null);
-								return;
-							}
+								if (rangeOverlapsDisabled(startDate, date, disabledDates)) {
+									setError("endDate", {
+										type: "manual",
+										message:
+											"This period overlaps an existing booking. Please choose different dates.",
+									});
+									setEndDate(null);
+									return;
+								}
 
-							if (!startDate) {
-								setEndDate(date);
 								clearErrors("endDate");
-								return;
-							}
+								setEndDate(date);
+							}}
+							selectsEnd
+							startDate={startDate}
+							endDate={endDate}
+							excludeDates={disabledDates}
+							minDate={startDate || new Date()}
+							dateFormat="yyyy-MM-dd"
+							placeholderText="Select end date"
+							popperPlacement="bottom-start"
+						/>
+					)}
+				</FormRow>
 
-							if (rangeOverlapsDisabled(startDate, date, disabledDates)) {
-								setError("endDate", {
-									type: "manual",
-									message: "This period overlaps an existing booking. Please choose different dates.",
-								});
-								setEndDate(null);
-								return;
-							}
-
-							clearErrors("endDate");
-							setEndDate(date);
-						}}
-						selectsEnd
-						startDate={startDate}
-						endDate={endDate}
-						excludeDates={disabledDates}
-						minDate={startDate || new Date()}
-						dateFormat="yyyy-MM-dd"
-						placeholderText="Select end date"
-						popperPlacement="bottom-start"
+				<FormRow
+					label={`Number of guests (max ${maxGuests})`}
+					error={errors?.numGuests?.message}>
+					<Input
+						type="number"
+						id="numGuests"
+						min={1}
+						max={maxGuests}
+						{...register("numGuests", {
+							required: "This field is required",
+							min: {
+								value: 1,
+								message: "At least 1 guest",
+							},
+							max: {
+								value: maxGuests,
+								message: `Max capacity is ${maxGuests}`,
+							},
+						})}
 					/>
-				)}
-			</FormRow>
+				</FormRow>
 
-			<FormRow
-				label={`Number of guests (max ${maxGuests})`}
-				error={errors?.numGuests?.message}>
-				<Input
-					type="number"
-					id="numGuests"
-					min={1}
-					max={maxGuests}
-					{...register("numGuests", {
-						required: "This field is required",
-						min: {
-							value: 1,
-							message: "At least 1 guest",
-						},
-						max: {
-							value: maxGuests,
-							message: `Max capacity is ${maxGuests}`,
-						},
-					})}
-				/>
-			</FormRow>
+				<FormRow label="Include breakfast?">
+					<Input
+						type="checkbox"
+						id="hasBreakfast"
+						{...register("hasBreakfast")}
+					/>
+				</FormRow>
 
-			<FormRow label="Include breakfast?">
-				<Input
-					type="checkbox"
-					id="hasBreakfast"
-					{...register("hasBreakfast")}
-				/>
-			</FormRow>
+				<FormRow label="Observations">
+					<Input
+						as="textarea"
+						id="observations"
+						{...register("observations")}
+					/>
+				</FormRow>
 
-			<FormRow label="Observations">
-				<Input
-					as="textarea"
-					id="observations"
-					{...register("observations")}
-				/>
-			</FormRow>
-
-			<FormRow>
-				<Button
-					$variation="secondary"
-					type="reset"
-					onClick={() => {
-						reset();
-						setStartDate(null);
-						setEndDate(null);
-						setDisabledDates([]);
-					}}>
-					Cancel
-				</Button>
-				<Button disabled={isCreating}>{isCreating ? "Creating..." : "Create booking"}</Button>
-			</FormRow>
-		</Form>
+				<FormRow>
+					<Button
+						$variation="secondary"
+						type="reset"
+						onClick={() => {
+							reset();
+							setStartDate(null);
+							setEndDate(null);
+							setDisabledDates([]);
+						}}>
+						Cancel
+					</Button>
+					<Button disabled={isCreating}>{isCreating ? "Creating..." : "Create booking"}</Button>
+				</FormRow>
+			</Form>
+		</>
 	);
 }
 

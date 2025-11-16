@@ -3,7 +3,7 @@ import styled from "styled-components";
 const StyledFormRow = styled.div`
 	display: grid;
 	align-items: center;
-	grid-template-columns: 24rem 1fr 1.2fr;
+	grid-template-columns: 24rem minmax(30rem, 1fr) minmax(30rem, 1.2fr);
 	gap: 2.4rem;
 
 	padding: 1.2rem 0;
@@ -25,10 +25,25 @@ const StyledFormRow = styled.div`
 		justify-content: flex-end;
 		gap: 1.2rem;
 	}
+
+
+	@media (max-width: 900px) {
+		grid-template-columns: 20rem minmax(15rem, 1fr) minmax(15rem, 1.2fr);
+		gap: 1.6rem;
+	}
+
+	@media (max-width: 700px) {
+		grid-template-columns: 1fr;
+		gap: 0.8rem;
+	}
 `;
 
 const Label = styled.label`
 	font-weight: 500;
+
+	@media (max-width: 700px) {
+		margin-bottom: 0.4rem;
+	}
 `;
 
 const Error = styled.span`
@@ -45,4 +60,5 @@ function FormRow({ label, error, children }) {
 		</StyledFormRow>
 	);
 }
+
 export default FormRow;

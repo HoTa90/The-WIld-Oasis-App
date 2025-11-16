@@ -39,7 +39,7 @@ const StyledRow = styled(CommonRow)`
 	transition: background-color 0.3s, border-color 0.3s;
 
 	&:not(:last-child) {
-		border-bottom: 1px solid var(--color-grey-100);
+		border-bottom: 1px solid var(--color-grey-200);
 	}
 `;
 

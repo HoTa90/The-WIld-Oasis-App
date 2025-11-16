@@ -1,6 +1,6 @@
+import AddBooking from "../features/bookings/AddBooking.jsx";
 import BookingTable from "../features/bookings/BookingTable.jsx";
 import BookingTableOperations from "../features/bookings/BookingTableOperations.jsx";
-import CreateBookingForm from "../features/bookings/CreateBookingForm.jsx";
 import Heading from "../ui/Heading";
 import Row from "../ui/Row";
 
@@ -9,11 +9,13 @@ function Bookings() {
 		<>
 			<Row type="horizontal">
 				<Heading as="h1">All bookings</Heading>
-				<BookingTableOperations/>
+				<BookingTableOperations />
 			</Row>
 
-			<BookingTable />
-			<CreateBookingForm/>
+			<Row>
+				<BookingTable />
+				<AddBooking />
+			</Row>
 		</>
 	);
 }
