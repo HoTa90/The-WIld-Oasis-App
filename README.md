@@ -214,7 +214,7 @@ If you want to run this project locally:
 
 ## 📱 Application Screenshots
 
-*Coming soon - Add screenshots of your application here*
+*Coming soon*
 
 ## 🎓 Learning Outcomes
 
