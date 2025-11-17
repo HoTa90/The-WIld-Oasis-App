@@ -1,9 +1,9 @@
 import styled from "styled-components"
-import LogOut from "../features/authentication/LogOut.jsx"
 import ButtonIcon from "./ButtonIcon.jsx"
 import { HiOutlineUser } from "react-icons/hi2"
 import { useNavigate } from "react-router"
 import DarkModeToggle from "./DarkModeToggle.jsx"
+import LogOut from "../features/authentication/Logout.jsx"
 
 const StyledHeaderMenu = styled.ul`
 	display: flex;
